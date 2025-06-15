@@ -1,0 +1,57 @@
+
+# ----------------- Variables Section -----------------
+units           lj
+boundary        f p p 
+atom_style      adress
+comm_modify     vel yes
+newton          on
+
+region          leftB block 0.0 7.279864181933038 0.0 8.85154769425142 0.0 8.85154769425142
+region          rightB block 42.6860865445357 49.96595072646873 0.0 8.85154769425142 0.0 8.85154769425142
+region          leftshear block 0.0 0.0 0.0 0.0 0.0 0.0 
+region          rightshear block 0.0 0.0 0.0 0.0 0.0 0.0
+region          leftBin block 1.5 5.779864181933038 1.5 7.351547694251421 1.5 7.351547694251421
+region          rightBin block 44.1860865445357 48.46595072646873 1.5 7.351547694251421 1.5 7.351547694251421
+region          roi block 7.279864181933038 42.6860865445357 0.0 8.85154769425142 0.0 8.85154769425142
+
+# ----------------- Init Section -----------------
+pair_style      hybrid/overlay table/adress/obmd/cg lookup 1000 lj/cut/rf/adress/at 2.8427037271004423 dpd/tstat 3.8087399077978197 3.8087399077978197 2.8427037271004423 2113
+bond_style      zero
+angle_style     zero
+
+# ----------------- Atom Definition Section -----------------
+read_data       "spc_adress_obmd.data"
+
+# ----------------- Settings Section -----------------
+pair_coeff      * * table/adress/obmd/cg "spc_potential.txt" SPC_POTENTIAL 2.8427037271004423
+pair_coeff      1 1 lj/cut/rf/adress/at 0.0 0.3158559696778269 80
+pair_coeff      2 2 lj/cut/rf/adress/at 1.0 1.0 80
+pair_coeff      1 2 lj/cut/rf/adress/at 0.0 0.3158559696778269 80
+pair_coeff      * * dpd/tstat 0.05
+bond_coeff      1 0.3158559696778269
+angle_coeff     1 109.46667
+
+neighbor        0.6317119393556538 bin
+neigh_modify    delay 0 every 1
+
+molecule        water spc_adress_obmd.mol
+
+timestep        0.0006366588145412873
+
+fix             1 all shake 1e-6 10 0 b 1 a 1 mol water
+fix             2 all nve
+fix             3 all adress 38.595135818066964 2.8427037271004423 slab
+fix             4 all adress/obmd 0 1 8558 1.2 0.0 0.0 0.0 0.0 0.0 0.0 &
+                region1 leftB  region2 rightB region3 leftshear region4 rightshear region5 leftBin region6 rightBin &
+                buffersize 7.279864181933038 shearsize 0.0 alpha 0.7 tau 0.05 nbuf 603 gfac 0.25 &
+                step 0 attempt 1 near 0 1.5 usher 1 3.6 1.0 0.35 10000 1.0 0.15 40 mol water 3 shake 1
+
+# ----------------- Compute Section -----------------
+
+
+# ----------------- Output Section -----------------
+thermo          1000
+thermo_style    custom step time etotal pe ke temp press
+
+run             1000000
+    

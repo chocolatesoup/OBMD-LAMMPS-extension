@@ -1,0 +1,35 @@
+
+# ----------------- Variables Section -----------------
+units           lj
+atom_style      adress
+special_bonds   fene
+comm_modify     vel yes
+
+# ----------------- Atom Definition Section -----------------
+read_data       "tetraliquid_adress.data"
+
+# ----------------- Settings Section -----------------
+bond_style      fene
+bond_coeff      1 30.0 1.5 1.0 1.0
+
+pair_style	    hybrid/overlay morse/adress/cg 2.31 lj/cut/adress/at 1.12
+pair_coeff      * * morse/adress/cg 0.105 2.4 2.31
+pair_coeff	    * * lj/cut/adress/at 1.0 1.0 1.12
+pair_modify	    pair lj/cut/adress/at shift yes
+
+reset_timestep  0
+timestep        0.005
+
+fix             1 all adress 12.0 2.5 slab
+fix             2 all langevin 1.0 1.0 0.5 3151
+fix             3 all nve
+
+# ----------------- Compute Section -----------------
+
+
+# ----------------- Output Section -----------------
+thermo          1000
+thermo_style    custom step time etotal density pe ke temp press
+
+run             100000
+    
