@@ -1,0 +1,12 @@
+BasedOnStyle: Google
+
+# Optional customizations (still Google-compliant)
+IndentWidth: 2               # Google prefers 2 spaces
+ColumnLimit: 80              # cpplint enforces 80 characters
+DerivePointerAlignment: false
+PointerAlignment: Left       # 'int* ptr' instead of 'int *ptr'
+AllowShortFunctionsOnASingleLine: Inline
+
+SortIncludes: true
+IncludeBlocks: Regroup
+
