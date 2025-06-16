@@ -1,12 +1,19 @@
 /* -*- c++ -*- ----------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
-   http://lammps.sandia.gov, Sandia National Laboratories
+   https://lammps.sandia.gov/, Sandia National Laboratories
    Steve Plimpton, sjplimp@sandia.gov
 
    Copyright (2003) Sandia Corporation.  Under the terms of Contract
    DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
    certain rights in this software.  This software is distributed under
    the GNU General Public License.
+
+
+   Attribution:
+   - Original code by Sandia Corporation.
+   - OBMD extension uses portions of code derived from evaporate and deposit fix style:
+   https://docs.lammps.org/fix_evaporate.html
+   https://docs.lammps.org/fix_deposit.html
 
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
