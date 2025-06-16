@@ -8,6 +8,13 @@
    certain rights in this software.  This software is distributed under
    the GNU General Public License.
 
+
+   Attribution:
+   - Original code by Sandia Corporation.
+   - OBMD extension uses portions of code derived from evaporate and deposit fix style:
+   https://docs.lammps.org/fix_evaporate.html
+   https://docs.lammps.org/fix_deposit.html
+
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
