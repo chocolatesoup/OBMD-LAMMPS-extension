@@ -49,8 +49,6 @@
 #include <cstring>
 #include <iostream>
 
-#include <fenv.h>    // used for debug
-
 using namespace LAMMPS_NS;
 using namespace FixConst;
 using namespace MathConst;
@@ -286,11 +284,6 @@ FixObmdMerged::FixObmdMerged(LAMMPS *lmp, int narg, char **arg) :
   nmax = 0;
   list = nullptr;
   mark = nullptr;
-
-  delete_left_file.open("./../out/data/delete_left.out");
-  delete_right_file.open("./../out/data/delete_right.out");
-  insert_left_file.open("./../out/data/insert_left.out");
-  insert_right_file.open("./../out/data/insert_right.out");
 }
 
 /* ---------------------------------------------------------------------- */
@@ -311,11 +304,6 @@ FixObmdMerged::~FixObmdMerged()
   memory->destroy(imageflags);
   memory->destroy(list);
   memory->destroy(mark);
-
-  delete_left_file.close();
-  delete_right_file.close();
-  insert_left_file.close();
-  insert_right_file.close();
 }
 
 /* ---------------------------------------------------------------------- */
@@ -842,14 +830,10 @@ void FixObmdMerged::try_deleting(Region *region, double *vnewl, double *vnewr)
         vnewl[0] += mass[type[i]] * vel[i][0];
         vnewl[1] += mass[type[i]] * vel[i][1];
         vnewl[2] += mass[type[i]] * vel[i][2];
-        delete_left_file << "deleted" << "\n";
-        delete_left_file.flush();
       } else {
         vnewr[0] += mass[type[i]] * vel[i][0];
         vnewr[1] += mass[type[i]] * vel[i][1];
         vnewr[2] += mass[type[i]] * vel[i][2];
-        delete_right_file << "deleted" << "\n";
-        delete_right_file.flush();
       }
       avec->copy(atom->nlocal - 1, i, 1);
       atom->nlocal--;
@@ -1203,8 +1187,6 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
               0.0;    // add zero as you insert with zero velocity (if some velocity will be chosen, change this accordingly)
           vnewl[2] +=
               0.0;    // add zero as you insert with zero velocity (if some velocity will be chosen, change this accordingly)
-          insert_left_file << "inserted" << "\n";
-          insert_left_file.flush();
         } else {
           vnewr[0] +=
               0.0;    // add zero as you insert with zero velocity (if some velocity will be chosen, change this accordingly)
@@ -1212,8 +1194,6 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
               0.0;    // add zero as you insert with zero velocity (if some velocity will be chosen, change this accordingly)
           vnewr[2] +=
               0.0;    // add zero as you insert with zero velocity	(if some velocity will be chosen, change this accordingly)
-          insert_right_file << "inserted" << "\n";
-          insert_right_file.flush();
         }
         atom->natoms += natom;
 
