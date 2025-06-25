@@ -8,6 +8,12 @@
    certain rights in this software.  This software is distributed under
    the GNU General Public License.
 
+
+    Attribution:
+   - Original code by Sandia Corporation.
+   - lj/cut/rf uses portions of code derived from lj/cut/coul/cut pair style:
+   https://docs.lammps.org/pair_lj_cut_coul.html
+
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
