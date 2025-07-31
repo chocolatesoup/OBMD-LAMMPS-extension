@@ -21,14 +21,12 @@ FixStyle(nve,FixNVE);
 #define LMP_FIX_NVE_H
 
 #include "fix.h"
-#include <fstream>
 
 namespace LAMMPS_NS {
 
 class FixNVE : public Fix {
  public:
   FixNVE(class LAMMPS *, int, char **);
-  ~FixNVE();
 
   int setmask() override;
   void init() override;
@@ -38,13 +36,6 @@ class FixNVE : public Fix {
   void final_integrate_respa(int, int) override;
   void reset_dt() override;
 
- private:
-   double linear_momentum[3];
-
-   std::ofstream px_file;
-   std::ofstream py_file;
-   std::ofstream pz_file;
-   
  protected:
   double dtv, dtf;
   double *step_respa;

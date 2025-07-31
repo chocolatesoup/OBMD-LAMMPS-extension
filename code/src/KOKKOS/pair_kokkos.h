@@ -923,6 +923,8 @@ int GetMaxNeighs(NeighStyle* list)
     maxneigh = MAX(maxneigh,num_neighs);
   }, Kokkos::Max<int>(maxneigh));
 
+  if (maxneigh < 0) maxneigh = 0;
+
   return maxneigh;
 }
 
@@ -950,21 +952,25 @@ EV_FLOAT pair_compute_neighlist (PairStyle* fpair, std::enable_if_t<(NEIGHFLAG&P
 
     static int vectorsize = 0;
     static int atoms_per_team = 0;
-    static int teamsize_max_for = 0;
-    static int teamsize_max_reduce = 0;
 
 #if defined(LMP_KOKKOS_GPU)
+    static int teamsize_max_for = 0;
+    static int teamsize_max_reduce = 0;
     static int lastcall = -1;
     if (!vectorsize || lastcall < fpair->lmp->neighbor->lastcall) {
       lastcall = fpair->lmp->update->ntimestep;
       vectorsize = GetMaxNeighs(list);
-      vectorsize = MathSpecial::powint(2,(int(log2(vectorsize) + 0.5))); // round to nearest power of 2
+      if (vectorsize == 0) vectorsize = 1;
+      vectorsize = MathSpecial::powint(2.0,(int(log2(double(vectorsize)) + 0.5))); // round to nearest power of 2
 
   #if defined(KOKKOS_ENABLE_HIP)
       int max_vectorsize = 64;
   #else
       int max_vectorsize = 32;
   #endif
+
+      if (fpair->lmp->kokkos->threads_per_atom_set)
+        vectorsize = fpair->lmp->kokkos->threads_per_atom;
 
       vectorsize = MIN(vectorsize,max_vectorsize);
 
@@ -980,6 +986,10 @@ EV_FLOAT pair_compute_neighlist (PairStyle* fpair, std::enable_if_t<(NEIGHFLAG&P
     int teamsize_max = teamsize_max_for;
     if (fpair->eflag || fpair->vflag)
       teamsize_max = teamsize_max_reduce;
+
+    if (fpair->lmp->kokkos->pair_team_size_set)
+      teamsize_max = fpair->lmp->kokkos->pair_team_size;
+
     atoms_per_team = teamsize_max/vectorsize;
 #else
     vectorsize = 1;

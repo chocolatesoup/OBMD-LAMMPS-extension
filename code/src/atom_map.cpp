@@ -19,7 +19,6 @@
 #include "memory.h"
 
 #include <cmath>
-#include <iostream>
 
 using namespace LAMMPS_NS;
 
@@ -38,7 +37,6 @@ static constexpr int EXTRA = 1000;
 
 void Atom::map_init(int check)
 {
-  std::cout<<"Atom::map_init(int check)"<<"\n";
   // check for new map style if max atomID changed (check = 1 = default)
   // recreate = 1 if must delete old map and create new map
   // recreate = 0 if can re-use old map w/out realloc and just adjust settings
@@ -68,7 +66,6 @@ void Atom::map_init(int check)
   // recreating: delete old map and create new one for array or hash
 
   } else {
-    std::cout<<"Atom::map_init() :::before map_delete()"<<"\n";
     map_delete();
 
     if (map_style == MAP_ARRAY) {

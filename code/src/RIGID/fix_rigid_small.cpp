@@ -33,6 +33,7 @@
 #include "molecule.h"
 #include "neighbor.h"
 #include "random_mars.h"
+#include "random_park.h"
 #include "respa.h"
 #include "rigid_const.h"
 #include "tokenizer.h"
@@ -62,6 +63,8 @@ FixRigidSmall::FixRigidSmall(LAMMPS *lmp, int narg, char **arg) :
   id_dilate(nullptr), id_gravity(nullptr), onemols(nullptr)
 {
   int i;
+
+  if (comm->me == 0) utils::logmesg(lmp,"Fix {} setup ...\n", style);
 
   scalar_flag = 1;
   extscalar = 0;
@@ -134,7 +137,7 @@ FixRigidSmall::FixRigidSmall(LAMMPS *lmp, int narg, char **arg) :
           error->all(FLERR,"Variable {} for fix {} custom does not exist", arg[4]+2, style);
         if (input->variable->atomstyle(ivariable) == 0)
           error->all(FLERR,"Fix {} custom variable {} is not atom-style variable", style, arg[4]+2);
-        auto value = new double[nlocal];
+        auto *value = new double[nlocal];
         input->variable->compute_atom(ivariable,0,value,1,0);
         int minval = INT_MAX;
         for (i = 0; i < nlocal; i++)
@@ -523,14 +526,14 @@ void FixRigidSmall::init()
   // if earlyflag, warn if any post-force fixes come after a rigid fix
 
   int count = 0;
-  for (auto &ifix : modify->get_fix_list())
+  for (const auto &ifix : modify->get_fix_list())
     if (ifix->rigid_flag) count++;
   if (count > 1 && comm->me == 0)
     error->warning(FLERR, "More than one fix rigid command");
 
   if (earlyflag) {
     bool rflag = false;
-    for (auto &ifix : modify->get_fix_list()) {
+    for (const auto &ifix : modify->get_fix_list()) {
       if (ifix->rigid_flag) rflag = true;
       if ((comm->me == 0) && rflag && (ifix->setmask() & POST_FORCE) && !ifix->rigid_flag)
         error->warning(FLERR,"Fix {} with ID {} alters forces after fix {}",
@@ -553,7 +556,7 @@ void FixRigidSmall::init()
   // error if a fix changing the box comes before rigid fix
 
   bool boxflag = false;
-  for (auto &ifix : modify->get_fix_list()) {
+  for (const auto &ifix : modify->get_fix_list()) {
     if (boxflag && utils::strmatch(ifix->style,"^rigid"))
         error->all(FLERR,"Rigid fixes must come before any box changing fix");
     if (ifix->box_change) boxflag = true;
@@ -562,7 +565,7 @@ void FixRigidSmall::init()
   // add gravity forces based on gravity vector from fix
 
   if (id_gravity) {
-    auto ifix = modify->get_fix_by_id(id_gravity);
+    auto *ifix = modify->get_fix_by_id(id_gravity);
     if (!ifix) error->all(FLERR,"Fix {} cannot find fix gravity ID {}", style, id_gravity);
     if (!utils::strmatch(ifix->style,"^gravity"))
       error->all(FLERR,"Fix {} gravity fix ID {} is not a gravity fix style", style, id_gravity);
@@ -1110,11 +1113,6 @@ void FixRigidSmall::enforce2d()
     b->angmom[1] = 0.0;
     b->omega[0] = 0.0;
     b->omega[1] = 0.0;
-    if (langflag && langextra) {
-      langextra[ibody][2] = 0.0;
-      langextra[ibody][3] = 0.0;
-      langextra[ibody][4] = 0.0;
-    }
   }
 }
 
@@ -1414,6 +1412,11 @@ void FixRigidSmall::set_xv()
         MathExtra::omega_to_angmom(b->omega,exone,eyone,ezone,
                                    inertiaatom,angmom[i]);
       }
+      if (atom->quat_flag) {
+        quatatom = atom->quat[i];
+        MathExtra::quatquat(b->quat,orient[i],quatatom);
+        MathExtra::qnormalize(quatatom);
+      }
       if (eflags[i] & DIPOLE) {
         MathExtra::quat_to_mat(b->quat,p);
         MathExtra::matvec(p,dorient[i],mu[i]);
@@ -1582,7 +1585,7 @@ void FixRigidSmall::create_bodies(tagint *bodyID)
 
   int *proclist;
   memory->create(proclist,ncount,"rigid/small:proclist");
-  auto inbuf = (InRvous *) memory->smalloc(ncount*sizeof(InRvous),"rigid/small:inbuf");
+  auto *inbuf = (InRvous *) memory->smalloc(ncount*sizeof(InRvous),"rigid/small:inbuf");
 
   // setup buf to pass to rendezvous comm
   // one BodyMsg datum for each constituent atom
@@ -1617,7 +1620,7 @@ void FixRigidSmall::create_bodies(tagint *bodyID)
                                  0,proclist,
                                  rendezvous_body,0,buf,sizeof(OutRvous),
                                  (void *) this);
-  auto outbuf = (OutRvous *) buf;
+  auto *outbuf = (OutRvous *) buf;
 
   memory->destroy(proclist);
   memory->sfree(inbuf);
@@ -1659,7 +1662,7 @@ int FixRigidSmall::rendezvous_body(int n, char *inbuf,
   double *x,*xown,*rsqclose;
   double **bbox,**ctr;
 
-  auto frsptr = (FixRigidSmall *) ptr;
+  auto *frsptr = (FixRigidSmall *) ptr;
   Memory *memory = frsptr->memory;
   Error *error = frsptr->error;
   MPI_Comm world = frsptr->world;
@@ -1671,7 +1674,7 @@ int FixRigidSmall::rendezvous_body(int n, char *inbuf,
   // key = body ID
   // value = index into Ncount-length data structure
 
-  auto in = (InRvous *) inbuf;
+  auto *in = (InRvous *) inbuf;
   std::map<tagint,int> hash;
   tagint id;
 
@@ -1766,7 +1769,7 @@ int FixRigidSmall::rendezvous_body(int n, char *inbuf,
 
   int nout = n;
   memory->create(proclist,nout,"rigid/small:proclist");
-  auto out = (OutRvous *) memory->smalloc(nout*sizeof(OutRvous),"rigid/small:out");
+  auto *out = (OutRvous *) memory->smalloc(nout*sizeof(OutRvous),"rigid/small:out");
 
   for (i = 0; i < nout; i++) {
     proclist[i] = in[i].me;
@@ -1854,7 +1857,7 @@ void FixRigidSmall::setup_bodies_static()
   }
 
   // grow extended arrays and set extended flags for each particle
-  // orientflag = 4 if any particle stores ellipsoid or tri orientation
+  // orientflag = 4 if any particle stores ellipsoid or tri orientation or quat
   // orientflag = 1 if any particle stores line orientation
   // dorientflag = 1 if any particle stores dipole orientation
 
@@ -1862,6 +1865,7 @@ void FixRigidSmall::setup_bodies_static()
     if (atom->ellipsoid_flag) orientflag = 4;
     if (atom->line_flag) orientflag = 1;
     if (atom->tri_flag) orientflag = 4;
+    if (atom->quat_flag) orientflag = 4;
     if (atom->mu_flag) dorientflag = 1;
     grow_arrays(atom->nmax);
 
@@ -2102,6 +2106,8 @@ void FixRigidSmall::setup_bodies_static()
 
   // diagonalize inertia tensor for each body via Jacobi rotations
   // inertia = 3 eigenvalues = principal moments of inertia
+  //   request that jacobi3() returns them in ascending order,
+  //   so that in 2d last evector is z-axis
   // evectors and exzy_space = 3 evectors = principal axes of rigid body
 
   int ierror;
@@ -2118,7 +2124,7 @@ void FixRigidSmall::setup_bodies_static()
     tensor[0][1] = tensor[1][0] = itensor[ibody][5];
 
     inertia = body[ibody].inertia;
-    ierror = MathEigen::jacobi3(tensor,inertia,evectors);
+    ierror = MathEigen::jacobi3(tensor,inertia,evectors,1);
     if (ierror) error->all(FLERR, "Insufficient Jacobi rotations for rigid body");
 
     ex = body[ibody].ex_space;
@@ -2133,6 +2139,22 @@ void FixRigidSmall::setup_bodies_static()
     ez[0] = evectors[0][2];
     ez[1] = evectors[1][2];
     ez[2] = evectors[2][2];
+
+    // for 2d, ensure that evector along z axis is last
+    // necessary so that quaternion is a simple rotation around +z axis
+    //   or a 180 degree rotation for a -z axis
+    // otherwise richardson() method for a body with a tiny evalue (near-linear)
+    //  may not preserve the correct z-aligned quat and associated evectors
+    //  over time due to round-off accumulation
+
+    if (domain->dimension == 2) {
+      if (fabs(ez[0]) > EPSILON || fabs(ez[1]) > EPSILON) {
+        std::swap(inertia[1],inertia[2]);
+        std::swap(ey[0],ez[0]);
+        std::swap(ey[1],ez[1]);
+        std::swap(ey[2],ez[2]);
+      }
+    }
 
     // if any principal moment < scaled EPSILON, set to 0.0
 
@@ -2156,11 +2178,12 @@ void FixRigidSmall::setup_bodies_static()
 
     // convert geometric center position to principal axis coordinates
     // xcm is wrapped, but xgc is not initially
+
     xcm = body[ibody].xcm;
     xgc = body[ibody].xgc;
     double delta[3];
     MathExtra::sub3(xgc,xcm,delta);
-    domain->minimum_image(delta);
+    domain->minimum_image_big(FLERR, delta);
     MathExtra::transpose_matvec(ex,ey,ez,delta,body[ibody].xgc_body);
     MathExtra::add3(xcm,delta,xgc);
   }
@@ -2195,7 +2218,12 @@ void FixRigidSmall::setup_bodies_static()
                                 delta,displace[i]);
 
     if (extended) {
-      if (eflags[i] & ELLIPSOID) {
+      if (atom->quat_flag) {
+        quatatom = atom->quat[i];
+        MathExtra::qconjugate(b->quat,qc);
+        MathExtra::quatquat(qc,quatatom,orient[i]);
+        MathExtra::qnormalize(orient[i]);
+      } else if (eflags[i] & ELLIPSOID) {
         quatatom = ebonus[ellipsoid[i]].quat;
         MathExtra::qconjugate(b->quat,qc);
         MathExtra::quatquat(qc,quatatom,orient[i]);
@@ -2507,7 +2535,7 @@ void FixRigidSmall::readfile(int which, double **array, int *inbody)
   if (nlines == 0) return;
   else if (nlines < 0) error->all(FLERR,"Fix {} infile has incorrect format", style);
 
-  auto buffer = new char[CHUNK*MAXLINE];
+  auto *buffer = new char[CHUNK*MAXLINE];
   int nread = 0;
   int me = comm->me;
 
@@ -2611,9 +2639,9 @@ void FixRigidSmall::write_restart_file(const char *file)
       error->one(FLERR, "Cannot open fix {} restart file {}: {}",
                  style, outfile, utils::getsyserror());
 
-    fmt::print(fp,"# fix rigid mass, COM, inertia tensor info for "
+    utils::print(fp,"# fix rigid mass, COM, inertia tensor info for "
                "{} bodies on timestep {}\n\n",nbody,update->ntimestep);
-    fmt::print(fp,"{}\n",nbody);
+    utils::print(fp,"{}\n",nbody);
   }
 
   // communication buffer for all my rigid body info
@@ -2705,6 +2733,77 @@ void FixRigidSmall::write_restart_file(const char *file)
 
   memory->destroy(buf);
   if (comm->me == 0) fclose(fp);
+}
+
+
+/* ----------------------------------------------------------------------
+   randomize rigid body VCMs with respect to a given temperature KT
+     and adjust velocities of individual particles accordingly
+   mom_flag enforces zeroing of linear momentum for overall system
+   called by fix hmc command
+------------------------------------------------------------------------- */
+
+void FixRigidSmall::resample_momenta(int groupbit, int mom_flag, class RanPark *random, double KT)
+{
+  int nlocal = nlocal_body;
+  int ntotal = nghost_body;
+  int *mask = atom->mask;
+
+  double stdev, bmass, wbody[3], mbody[3];
+  double total_mass = 0;
+  Body *b;
+  double vcm[] = {0.0, 0.0, 0.0};
+
+  for (int ibody = 0; ibody < nlocal; ibody++) {
+    b = &body[ibody];
+    if (mask[b->ilocal] & groupbit) {
+      bmass = b->mass;
+      stdev = sqrt(KT / bmass);
+      total_mass += bmass;
+      for (int j = 0; j < 3; j++) {
+        b->vcm[j] = stdev * random->gaussian();
+        vcm[j] += b->vcm[j] * bmass;
+        if (b->inertia[j] > 0.0)
+          wbody[j] = sqrt(KT / b->inertia[j]) * random->gaussian();
+        else
+          wbody[j] = 0.0;
+      }
+    }
+    MathExtra::matvec(b->ex_space, b->ey_space, b->ez_space, wbody, b->omega);
+  }
+
+  if (mom_flag && (total_mass > 0.0)) {
+    for (int j = 0; j < 3; j++) vcm[j] /= total_mass;
+    for (int ibody = 0; ibody < nlocal; ibody++) {
+      if (mask[b->ilocal] & groupbit) {
+        b = &body[ibody];
+        for (int j = 0; j < 3; j++) b->vcm[j] -= vcm[j];
+      }
+    }
+  }
+
+  // forward communicate vcm and omega to ghost bodies
+
+  commflag = FINAL;
+  comm->forward_comm(this, 10);
+
+  // compute angular momenta of rigid bodies
+
+  for (int ibody = 0; ibody < ntotal; ibody++) {
+    b = &body[ibody];
+    MathExtra::omega_to_angmom(b->omega, b->ex_space, b->ey_space, b->ez_space, b->inertia,
+                               b->angmom);
+    MathExtra::transpose_matvec(b->ex_space, b->ey_space, b->ez_space, b->angmom, mbody);
+    MathExtra::quatvec(b->quat, mbody, b->conjqm);
+    b->conjqm[0] *= 2.0;
+    b->conjqm[1] *= 2.0;
+    b->conjqm[2] *= 2.0;
+    b->conjqm[3] *= 2.0;
+  }
+
+  // reset velocities of individual atoms
+
+  set_v();
 }
 
 /* ----------------------------------------------------------------------
