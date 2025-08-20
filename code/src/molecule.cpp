@@ -166,7 +166,8 @@ void Molecule::command(int narg, char **arg, int &index)
     if (comm->me == 0) {
       fp = fopen(filename.c_str(), "r");
       if (fp == nullptr)
-        error->one(FLERR, fileiarg, "Cannot open molecule file {}: {}", filename, utils::getsyserror());
+        error->one(FLERR, fileiarg, "Cannot open molecule file {}: {}", filename,
+                   utils::getsyserror());
       try {
         // try to parse as a JSON file. parser throws an exception on errors
         // if successful, temporarily serialize to bytearray for communication
@@ -204,7 +205,8 @@ void Molecule::command(int narg, char **arg, int &index)
     if (comm->me == 0) {
       fp = fopen(filename.c_str(), "r");
       if (fp == nullptr)
-        error->one(FLERR, fileiarg, "Cannot open molecule file {}: {}", filename, utils::getsyserror());
+        error->one(FLERR, fileiarg, "Cannot open molecule file {}: {}", filename,
+                   utils::getsyserror());
     }
 
     // scan file for sizes of all fields and allocate storage for them
