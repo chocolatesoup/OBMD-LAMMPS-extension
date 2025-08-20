@@ -51,6 +51,7 @@ class Molecule : protected Pointers {
   int nspecialflag, specialflag;
   int shakeflag, shakeflagflag, shakeatomflag, shaketypeflag;
   int bodyflag, ibodyflag, dbodyflag;
+  int repatomflag;
 
   // 1 if attribute defined or computed, 0 if not
 
@@ -69,6 +70,7 @@ class Molecule : protected Pointers {
   double *radius;      // radius of each atom
   double *rmass;       // mass of each atom
   double **mu;         // dipole vector of each atom
+  int *rep_atom;       // mark representative atom
 
   int *num_bond;    // bonds, angles, dihedrals, impropers for each atom
   int **bond_type;
@@ -164,6 +166,7 @@ class Molecule : protected Pointers {
   void shakeatom_read(char *);
   void shaketype_read(char *);
   void body(int, int, char *);
+  void repatoms(char *);
 
   void initialize();
   void allocate();

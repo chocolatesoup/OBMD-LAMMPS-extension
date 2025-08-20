@@ -56,7 +56,7 @@ Molecule::Molecule(LAMMPS *lmp) :
     special(nullptr), shake_flag(nullptr), shake_atom(nullptr), shake_type(nullptr),
     avec_body(nullptr), ibodyparams(nullptr), dbodyparams(nullptr), fragmentmask(nullptr),
     dx(nullptr), dxcom(nullptr), dxbody(nullptr), quat_external(nullptr), fp(nullptr),
-    count(nullptr)
+    count(nullptr), rep_atom(nullptr)
 {
   // parse args until reach unknown arg (next file)
 
@@ -2345,6 +2345,12 @@ void Molecule::read(int flag)
                (keyword == "Bond Coeffs") || (keyword == "Angle Coeffs") ||
                (keyword == "Dihedral Coeffs") || (keyword == "Improper Coeffs")) {
       error->all(FLERR, fileiarg, "Found data file section '{}' in molecule file\n", keyword);
+    } else if (keyword == "Representative atoms") { // read rep_atom info if provided
+      repatomflag = 1;
+      if (flag)
+        repatoms(line);
+      else
+        skip_lines(natoms,line,keyword);
     } else {
 
       // Error: Either a too long/short section or a typo in the keyword
@@ -3615,6 +3621,43 @@ int Molecule::findfragment(const char *name)
 }
 
 /* ----------------------------------------------------------------------
+   read representative atoms from file
+------------------------------------------------------------------------- */
+
+void Molecule::repatoms(char *line) { // PP
+
+  const std::string location = "Representative atoms section of molecule file";
+  std::string repatomstr;
+  for (int i = 0; i < natoms; i++) count[i] = 0;
+
+  for (int i = 0; i < natoms; i++) {
+    readline(line);
+    auto values = Tokenizer(utils::trim(line)).as_vector();
+    int nwords = values.size();
+    
+    for (std::size_t ii = 0; ii < values.size(); ++ii) {
+      if (utils::strmatch(values[ii], "^#")) {
+        nwords = ii;
+        break;
+      }
+    }
+
+    if (nwords != 2) error->all(FLERR, "Invalid format in {}: {}", location, utils::trim(line)); 
+
+    // check # of atoms
+    int iatom = utils::inumeric(FLERR, values[0], false, lmp);
+    if (iatom < 1 || iatom > natoms)
+      error->all(FLERR, "Invalid atom index {} in {}: {}", iatom, location, utils::trim(line)); // should not happen
+    count[--iatom]++;
+
+    repatomstr = utils::utf8_subst(values[1]); // PP ... marked and unmarked atoms
+    rep_atom[iatom] = utils::inumeric(FLERR, repatomstr, false, lmp);
+  }
+}
+
+
+
+/* ----------------------------------------------------------------------
    error check molecule attributes and topology against system settings
 ------------------------------------------------------------------------- */
 
@@ -3698,6 +3741,7 @@ void Molecule::initialize()
   nspecialflag = specialflag = 0;
   shakeflag = shakeflagflag = shakeatomflag = shaketypeflag = 0;
   bodyflag = ibodyflag = dbodyflag = 0;
+  repatomflag = 0;
 
   centerflag = massflag = comflag = inertiaflag = 0;
   tag_require = 0;
@@ -3759,6 +3803,7 @@ void Molecule::allocate()
   if (muflag) memory->create(mu, natoms, 3, "molecule:mu");
   if (radiusflag) memory->create(radius, natoms, "molecule:radius");
   if (rmassflag) memory->create(rmass, natoms, "molecule:rmass");
+  if (repatomflag) memory->create(rep_atom, natoms, "molecule:rep_atom");
 
   // always allocate num_bond,num_angle,etc and nspecial
   // even if not in molecule file, initialize to 0
