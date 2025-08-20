@@ -1,5 +1,7 @@
 This document serves as a guide for users and developers working with the `obmd` extension in LAMMPS. Therefore, **general knowledge about LAMMPS and molecular dynamics simulations is assumed**. Additionally, basic familiarity with compiling and running C++ code is expected. 
 
+This repository contains the full LAMMPS source code with the OBMD fix. Besides the additional files in `src/OBMD` fix directory, the `molecule.{cpp,h}` files in `src/` folder were also modified. A patch file (`molecule.patch`) with differences with the original LAMMPS files is provided (you do not need to apply the patch, the changes are already present).
+
 To perform open-boundary molecular dynamics (OBMD) simulations using the `obmd` extension, we provide a **Python script** named `input.py`, which generates `in.simulation` input script for LAMMPS. LAMMPS is then started with this input as a parameter, for example,
 
 ```bash
