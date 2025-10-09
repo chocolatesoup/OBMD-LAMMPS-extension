@@ -30,4 +30,10 @@ jobs:
         echo $EBROOTLAMMPS
         ls $EBROOTLAMMPS
         python3 examples/OBMD_DPD/input.py
-        mpirun --oversubscribe -np 4 lmp -in in.simulation 
+        mpirun --oversubscribe -np 4 lmp -in in.simulation
+    - name: Upload temp files on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: temp-files
+        path: ${{ runner.temp }}
