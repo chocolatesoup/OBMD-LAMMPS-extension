@@ -1,8 +1,16 @@
 name: MultiXscale-compile_lammps
 run-name: Compile new Plugin OBMD
 on:
-  push
-  pull_request
+  push:
+    paths:
+      - '.github/**'
+      - 'code/**'
+      - 'OBMD_DPD/**'
+  pull_request:
+    paths:
+      - '.github/**'
+      - 'code/**'
+      - 'OBMD_DPD/**'
 jobs:
   build:
     runs-on: ${{ matrix.os }}
