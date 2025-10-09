@@ -6,11 +6,6 @@ on:
       - '.github/**'
       - 'code/**'
       - 'OBMD_DPD/**'
-  pull_request:
-    paths:
-      - '.github/**'
-      - 'code/**'
-      - 'OBMD_DPD/**'
 jobs:
   build:
     runs-on: ${{ matrix.os }}
