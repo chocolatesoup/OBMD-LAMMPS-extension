@@ -24,9 +24,9 @@ jobs:
         eb --show-config
         echo "Get EasyConfig"
         # Can change the LAMMPS commit which will be build by updating LAMMPS_COMMIT_BUILD https://github.com/laraPPr/lammps/settings/variables/actions
-        eb .github/workflows/LAMMPS_OBMD-foss-2023b-software-commit.eb --software-commit ${{ vars.LAMMPS_COMMIT_BUILD }}
+        eb .github/workflows/LAMMPS_OBMD-foss-2023b-software-commit.eb --software-commit ${GITHUB_SHA}
         module avail LAMMPS
-        module load LAMMPS/${{ vars.LAMMPS_COMMIT_BUILD }}-foss-2023a-kokkos-dev_OBMD
+        module load LAMMPS/${GITHUB_SHA}-foss-2023a-kokkos-dev_OBMD
         echo $EBROOTLAMMPS
         ls $EBROOTLAMMPS
         python3 examples/OBMD_DPD/input.py
