@@ -74,7 +74,7 @@ class FixObmdMerged : public Fix {
   char *pxxstr, *pxystr, *pxzstr, *dpstr, *freqstr;
 
   double tau, alpha, buffer_size, shear_size, nbuf;
-  double pxx, pxy, pxz, dpxx, t0_left, t0_right, lambda, freq;
+  double pxx, pxy, pxz, dpxx, freq;
   double mol_len;
 
   void check_ghosts();
@@ -104,10 +104,6 @@ class FixObmdMerged : public Fix {
   char *ystr;
   int zstyle, zvar;
   char *zstr;
-  int t0_left_style, t0_left_var;
-  char *t0_left_str;
-  int t0_right_style, t0_right_var;
-  char *t0_right_str;
 
   int nfirst, ninserted;
   tagint maxtag_all, maxmol_all;

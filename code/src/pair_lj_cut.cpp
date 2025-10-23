@@ -31,8 +31,6 @@
 #include <cmath>
 #include <cstring>
 
-#include <iostream>
-
 using namespace LAMMPS_NS;
 using namespace MathConst;
 
@@ -117,7 +115,7 @@ void PairLJCut::compute(int eflag, int vflag)
         r6inv = r2inv * r2inv * r2inv;
         forcelj = r6inv * (lj1[itype][jtype] * r6inv - lj2[itype][jtype]);
         fpair = factor_lj * forcelj * r2inv;
-        
+
         f[i][0] += delx * fpair;
         f[i][1] += dely * fpair;
         f[i][2] += delz * fpair;
@@ -443,7 +441,7 @@ void PairLJCut::settings(int narg, char **arg)
 
 void PairLJCut::coeff(int narg, char **arg)
 {
-  if (narg < 4 || narg > 5) error->all(FLERR, "Incorrect args for pair coefficients");
+  if (narg < 4 || narg > 5) error->all(FLERR, "Incorrect args for pair coefficients" + utils::errorurl(21));
   if (!allocated) allocate();
 
   int ilo, ihi, jlo, jhi;
@@ -467,7 +465,7 @@ void PairLJCut::coeff(int narg, char **arg)
     }
   }
 
-  if (count == 0) error->all(FLERR, "Incorrect args for pair coefficients");
+  if (count == 0) error->all(FLERR, "Incorrect args for pair coefficients" + utils::errorurl(21));
 }
 
 /* ----------------------------------------------------------------------
@@ -481,7 +479,7 @@ void PairLJCut::init_style()
   int list_style = NeighConst::REQ_DEFAULT;
 
   if (update->whichflag == 1 && utils::strmatch(update->integrate_style, "^respa")) {
-    auto respa = dynamic_cast<Respa *>(update->integrate);
+    auto *respa = dynamic_cast<Respa *>(update->integrate);
     if (respa->level_inner >= 0) list_style = NeighConst::REQ_RESPA_INOUT;
     if (respa->level_middle >= 0) list_style = NeighConst::REQ_RESPA_ALL;
   }

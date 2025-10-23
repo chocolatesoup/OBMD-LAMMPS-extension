@@ -1,3 +1,4 @@
+
 /* ----------------------------------------------------------------------
    LAMMPS - Large-scale Atomic/Molecular Massively Parallel Simulator
    https://www.lammps.org/, Sandia National Laboratories
@@ -37,6 +38,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <utility>
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -119,7 +121,7 @@ FixRigid::FixRigid(LAMMPS *lmp, int narg, char **arg) :
     int nlocal = atom->nlocal;
     int custom_flag = strcmp(arg[3], "custom") == 0;
     if (custom_flag) {
-      if (narg < 5) utils::missing_cmd_args(FLERR, fmt::format("fix {} custom"), error);
+      if (narg < 5) utils::missing_cmd_args(FLERR, fmt::format("fix {} custom", style), error);
 
       // determine whether atom-style variable or atom property is used
 
@@ -150,7 +152,7 @@ FixRigid::FixRigid(LAMMPS *lmp, int narg, char **arg) :
         if (input->variable->atomstyle(ivariable) == 0)
           error->all(FLERR, "Fix {} custom variable {} is not atom-style variable", style,
                      arg[4] + 2);
-        auto value = new double[nlocal];
+        auto *value = new double[nlocal];
         input->variable->compute_atom(ivariable, 0, value, 1, 0);
         int minval = INT_MAX;
         for (i = 0; i < nlocal; i++)
@@ -219,11 +221,12 @@ FixRigid::FixRigid(LAMMPS *lmp, int narg, char **arg) :
     // error if atom belongs to more than 1 rigid body
 
   } else if (strcmp(arg[3], "group") == 0) {
-    if (narg < 5) utils::missing_cmd_args(FLERR, fmt::format("fix {} group"), error);
+    if (narg < 5) utils::missing_cmd_args(FLERR, fmt::format("fix {} group", style), error);
     rstyle = GROUP;
     nbody = utils::inumeric(FLERR, arg[4], false, lmp);
     if (nbody <= 0) error->all(FLERR, "Illegal fix {} number of groups {}", style, nbody);
-    if (narg < 5 + nbody) utils::missing_cmd_args(FLERR, fmt::format("fix {} group"), error);
+    if (narg < 5 + nbody)
+      utils::missing_cmd_args(FLERR, fmt::format("fix {} group", style), error);
     iarg = 5 + nbody;
 
     int *igroups = new int[nbody];
@@ -703,14 +706,14 @@ void FixRigid::init()
   // if earlyflag, warn if any post-force fixes come after a rigid fix
 
   int count = 0;
-  for (auto &ifix : modify->get_fix_list())
+  for (const auto &ifix : modify->get_fix_list())
     if (ifix->rigid_flag) count++;
   if (count > 1 && comm->me == 0)
     error->warning(FLERR,"More than one fix rigid");
 
   if (earlyflag) {
     bool rflag = false;
-    for (auto &ifix : modify->get_fix_list()) {
+    for (const auto &ifix : modify->get_fix_list()) {
       if (ifix->rigid_flag) rflag = true;
       if ((comm->me == 0) && rflag && (ifix->setmask() & POST_FORCE) && !ifix->rigid_flag)
         error->warning(FLERR, "Fix {} with ID {} alters forces after fix rigid",
@@ -733,7 +736,7 @@ void FixRigid::init()
   //  error if a fix changing the box comes before rigid fix
 
   bool boxflag = false;
-  for (auto &ifix : modify->get_fix_list()) {
+  for (const auto &ifix : modify->get_fix_list()) {
     if (boxflag && utils::strmatch(ifix->style,"^rigid"))
         error->all(FLERR,"Rigid fixes must come before any box changing fix");
     if (ifix->box_change) boxflag = true;
@@ -742,7 +745,7 @@ void FixRigid::init()
   // add gravity forces based on gravity vector from fix
 
   if (id_gravity) {
-    auto ifix = modify->get_fix_by_id(id_gravity);
+    auto *ifix = modify->get_fix_by_id(id_gravity);
     if (!ifix) error->all(FLERR,"Fix rigid cannot find fix gravity ID {}", id_gravity);
     if (!utils::strmatch(ifix->style,"^gravity"))
       error->all(FLERR,"Fix rigid gravity fix ID {} is not a gravity fix style", id_gravity);
@@ -1234,11 +1237,6 @@ void FixRigid::enforce2d()
     angmom[ibody][1] = 0.0;
     omega[ibody][0] = 0.0;
     omega[ibody][1] = 0.0;
-    if (langflag && langextra) {
-      langextra[ibody][2] = 0.0;
-      langextra[ibody][3] = 0.0;
-      langextra[ibody][4] = 0.0;
-    }
   }
 }
 
@@ -1468,11 +1466,11 @@ void FixRigid::set_xv()
     double theta_body,theta;
     double *shape,*quatatom,*inertiaatom;
 
-    AtomVecEllipsoid::Bonus *ebonus;
+    AtomVecEllipsoid::Bonus *ebonus = nullptr;
     if (avec_ellipsoid) ebonus = avec_ellipsoid->bonus;
-    AtomVecLine::Bonus *lbonus;
+    AtomVecLine::Bonus *lbonus = nullptr;
     if (avec_line) lbonus = avec_line->bonus;
-    AtomVecTri::Bonus *tbonus;
+    AtomVecTri::Bonus *tbonus = nullptr;
     if (avec_tri) tbonus = avec_tri->bonus;
     double **omega_one = atom->omega;
     double **angmom_one = atom->angmom;
@@ -1518,6 +1516,11 @@ void FixRigid::set_xv()
         MathExtra::q_to_exyz(quatatom,exone,eyone,ezone);
         MathExtra::omega_to_angmom(omega[ibody],exone,eyone,ezone,
                                    inertiaatom,angmom_one[i]);
+      }
+      if (atom->quat_flag) {
+        quatatom = atom->quat[i];
+        MathExtra::quatquat(quat[ibody],orient[i],quatatom);
+        MathExtra::qnormalize(quatatom);
       }
       if (eflags[i] & DIPOLE) {
         MathExtra::quat_to_mat(quat[ibody],p);
@@ -1716,7 +1719,7 @@ void FixRigid::setup_bodies_static()
   }
 
   // grow extended arrays and set extended flags for each particle
-  // orientflag = 4 if any particle stores ellipsoid or tri orientation
+  // orientflag = 4 if any particle stores ellipsoid or tri orientation or quat
   // orientflag = 1 if any particle stores line orientation
   // dorientflag = 1 if any particle stores dipole orientation
 
@@ -1724,6 +1727,7 @@ void FixRigid::setup_bodies_static()
     if (atom->ellipsoid_flag) orientflag = 4;
     if (atom->line_flag) orientflag = 1;
     if (atom->tri_flag) orientflag = 4;
+    if (atom->quat_flag) orientflag = 4;
     if (atom->mu_flag) dorientflag = 1;
     grow_arrays(atom->nmax);
 
@@ -1958,6 +1962,8 @@ void FixRigid::setup_bodies_static()
 
   // diagonalize inertia tensor for each body via Jacobi rotations
   // inertia = 3 eigenvalues = principal moments of inertia
+  //   request that jacobi3() return them in ascending order,
+  ///  so that in 2d last evector is z-axis
   // evectors and exzy_space = 3 evectors = principal axes of rigid body
 
   int ierror;
@@ -1972,7 +1978,7 @@ void FixRigid::setup_bodies_static()
     tensor[0][2] = tensor[2][0] = all[ibody][4];
     tensor[0][1] = tensor[1][0] = all[ibody][5];
 
-    ierror = MathEigen::jacobi3(tensor,inertia[ibody],evectors);
+    ierror = MathEigen::jacobi3(tensor,inertia[ibody],evectors,1);
     if (ierror) error->all(FLERR,
                            "Insufficient Jacobi rotations for rigid body");
 
@@ -1985,6 +1991,22 @@ void FixRigid::setup_bodies_static()
     ez_space[ibody][0] = evectors[0][2];
     ez_space[ibody][1] = evectors[1][2];
     ez_space[ibody][2] = evectors[2][2];
+
+    // for 2d, ensure that evector along z axis is last
+    // necessary so that quaternion is a simple rotation around +z axis
+    //   or a 180 degree rotation for a -z axis
+    // otherwise richardson() method for a body with a tiny evalue (near-linear)
+    //  may not preserve the correct z-aligned quat and associated evectors
+    //  over time due to round-off accumulation
+
+    if (domain->dimension == 2) {
+      if (fabs(ez_space[ibody][0]) > EPSILON || fabs(ez_space[ibody][1]) > EPSILON) {
+        std::swap(inertia[ibody][1],inertia[ibody][2]);
+        std::swap(ey_space[ibody][0],ez_space[ibody][0]);
+        std::swap(ey_space[ibody][1],ez_space[ibody][1]);
+        std::swap(ey_space[ibody][2],ez_space[ibody][2]);
+      }
+    }
 
     // if any principal moment < scaled EPSILON, set to 0.0
 
@@ -2046,7 +2068,12 @@ void FixRigid::setup_bodies_static()
                                 ez_space[ibody],delta,displace[i]);
 
     if (extended) {
-      if (eflags[i] & ELLIPSOID) {
+      if (atom->quat_flag) {
+        quatatom = atom->quat[i];
+        MathExtra::qconjugate(quat[ibody],qc);
+        MathExtra::quatquat(qc,quatatom,orient[i]);
+        MathExtra::qnormalize(orient[i]);
+      } else if (eflags[i] & ELLIPSOID) {
         quatatom = ebonus[ellipsoid[i]].quat;
         MathExtra::qconjugate(quat[ibody],qc);
         MathExtra::quatquat(qc,quatatom,orient[i]);
@@ -2326,7 +2353,7 @@ void FixRigid::readfile(int which, double *vec, double **array1, double **array2
   if (nlines == 0) return;
   else if (nlines < 0) error->all(FLERR,"Fix rigid infile has incorrect format");
 
-  auto buffer = new char[CHUNK*MAXLINE];
+  auto *buffer = new char[CHUNK*MAXLINE];
   int nread = 0;
   int me = comm->me;
   while (nread < nlines) {
@@ -2422,8 +2449,8 @@ void FixRigid::write_restart_file(const char *file)
   if (fp == nullptr)
     error->one(FLERR,"Cannot open fix rigid restart file {}: {}",outfile,utils::getsyserror());
 
-  fmt::print(fp,"# fix rigid mass, COM, inertia tensor info for {} bodies on timestep {}\n\n",nbody,update->ntimestep);
-  fmt::print(fp,"{}\n",nbody);
+  utils::print(fp,"# fix rigid mass, COM, inertia tensor info for {} bodies on timestep {}\n\n",nbody,update->ntimestep);
+  utils::print(fp,"{}\n",nbody);
 
   // compute I tensor against xyz axes from diagonalized I and current quat
   // Ispace = P Idiag P_transpose

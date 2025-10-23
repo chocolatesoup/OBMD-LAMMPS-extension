@@ -549,7 +549,6 @@ void FixObmdMerged::setup(int vflag)
 ------------------------------------------------------------------------- */
 void FixObmdMerged::pre_exchange()
 {
-  std::cout << "pre_exchange" << "\n";
   int cnt_left, cnt_right, stev_left, stev_right, i;
   double ninsert_left, ninsert_right;
   double masstotal_left, masstotal_right;
@@ -963,7 +962,7 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
               delx = coord[0] - x[i][0];
               dely = coord[1] - x[i][1];
               delz = 0.0;
-              domain->minimum_image(delx, dely, delz);
+              domain->minimum_image(FLERR, delx, dely, delz);
               if (dimension == 2)
                 rsq = delx * delx;
               else
@@ -1038,7 +1037,7 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
               delx = coords[m][0] - x[i][0];
               dely = coords[m][1] - x[i][1];
               delz = coords[m][2] - x[i][2];
-              domain->minimum_image(delx, dely, delz);
+              domain->minimum_image(FLERR, delx, dely, delz);
               rsq = delx * delx + dely * dely + delz * delz;
               if (rsq < nearsq) {
                 if (comm->me == 0)
@@ -1249,8 +1248,6 @@ double FixObmdMerged::g_par_global_charged(Region *region, int step)
 
   int nlocal = atom->nlocal;
   tagint *molecule = atom->molecule;
-  int *rep_atom = atom->rep_atom;
-  double **cms = atom->cms_mol;
   double *mass = atom->mass;
   int *type = atom->type;
   double **x = atom->x;
@@ -1343,8 +1340,6 @@ double FixObmdMerged::g_par_local_charged(double mass, Region *region, double xv
 
 double FixObmdMerged::g_perp_global_charged(Region *iregion_var, int step)
 {
-  std::cout << "g_perp_global()" << "\n";
-  std::cout << "g_perp_global(): step: " << step << "\n";
   if (iregion_var) iregion_var->prematch();
 
   int nlocal = atom->nlocal;
@@ -1792,7 +1787,7 @@ double FixObmdMerged::energy(int i, int itype, double *coord, double *fusher)
     dely = coord[1] - x[j][1];
     delz = coord[2] - x[j][2];
 
-    domain->minimum_image(delx, dely, delz);
+    domain->minimum_image(FLERR, delx, dely, delz);
     rsq = delx * delx + dely * dely + delz * delz;
 
     jtype = type[j];
@@ -1837,7 +1832,7 @@ double FixObmdMerged::energy_atomistic_obmd(Region *iregion_var, double qi, int 
     dely = coord[1] - x[j][1];
     delz = coord[2] - x[j][2];
 
-    domain->minimum_image(delx, dely, delz);
+    domain->minimum_image(FLERR, delx, dely, delz);
     rsq = delx * delx + dely * dely + delz * delz;
 
     jtype = type[j];

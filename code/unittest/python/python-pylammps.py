@@ -53,7 +53,7 @@ class PythonPyLammps(unittest.TestCase):
 
         types = [1, 1]
 
-        self.assertEqual(self.pylmp.lmp.create_atoms(2, id=None, type=types, x=x), 2)
+        self.assertEqual(self.pylmp.lmp.create_atoms(2, atomid=None, atype=types, x=x), 2)
         self.assertEqual(self.pylmp.system.natoms, 2)
         self.assertEqual(len(self.pylmp.atoms), 2)
         numpy.testing.assert_array_equal(self.pylmp.atoms[0].position, tuple(x[0:3]))
@@ -119,6 +119,10 @@ class PythonPyLammps(unittest.TestCase):
         self.assertEqual(self.pylmp.communication.comm_style,'brick')
         self.assertEqual(self.pylmp.communication.comm_layout,'uniform')
         self.assertEqual(self.pylmp.communication.nprocs,1)
+        self.assertEqual(self.pylmp.communication.nthreads,1)
+        self.assertEqual(self.pylmp.communication.procgrid,[1,1,1])
+        self.assertEqual(self.pylmp.communication.proc_grid,[1,1,1])
+        self.assertEqual(self.pylmp.communication.ghost_velocity,0)
         self.assertEqual(len(self.pylmp.computes),3)
         self.assertEqual(self.pylmp.computes[0]['name'], 'thermo_temp')
         self.assertEqual(self.pylmp.computes[0]['style'], 'temp')
@@ -137,6 +141,11 @@ class PythonPyLammps(unittest.TestCase):
         self.assertEqual(self.pylmp.fixes[0]['group'], 'all')
         self.pylmp.group('none','empty')
         self.assertEqual(len(self.pylmp.groups),2)
+        self.pylmp.comm_style('tiled')
+        self.pylmp.mass('*',1.0)
+        self.pylmp.run('0','post','no')
+        self.pylmp.balance(0.1,'rcb')
+        self.assertEqual(self.pylmp.communication.procgrid,None)
 
 if __name__ == "__main__":
     unittest.main()

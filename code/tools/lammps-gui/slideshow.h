@@ -28,11 +28,20 @@ class SlideShow : public QDialog {
 
 public:
     explicit SlideShow(const QString &fileName, QWidget *parent = nullptr);
+    ~SlideShow() override = default;
+
+    SlideShow()                             = delete;
+    SlideShow(const SlideShow &)            = delete;
+    SlideShow(SlideShow &&)                 = delete;
+    SlideShow &operator=(const SlideShow &) = delete;
+    SlideShow &operator=(SlideShow &&)      = delete;
+
     void add_image(const QString &filename);
     void clear();
 
 private slots:
     void quit();
+    void delete_images();
     void stop_run();
     void movie();
     void first();
