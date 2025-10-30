@@ -1365,6 +1365,15 @@ struct params_lj_coul {
   F_FLOAT cut_ljsq,cut_coulsq,lj1,lj2,lj3,lj4,offset;
 };
 
+// create new struct
+struct params_lj_rf{
+  KOKKOS_INLINE_FUNCTION
+  params_lj_rf() {cut_ljsq=0;cut_coulsq=0;epsilon_rf=0;lj1=0;lj2=0;lj3=0;lj4=0;offset=0;};
+  KOKKOS_INLINE_FUNCTION
+  params_lj_rf(int /*i*/) {cut_ljsq=0;cut_coulsq=0;epsilon_rf=0;lj1=0;lj2=0;lj3=0;lj4=0;offset=0;};
+  F_FLOAT cut_ljsq,cut_coulsq,epsilon_rf,lj1,lj2,lj3,lj4,offset;
+};
+
 // ReaxFF
 
 struct alignas(4 * sizeof(int)) reax_int4 {
