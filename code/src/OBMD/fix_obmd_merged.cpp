@@ -666,8 +666,8 @@ void FixObmdMerged::try_deleting(Region *region, double *vnewl, double *vnewr)
   int ncount = 0;
   for (i = 0; i < nlocal; i++) {
     if (x[i][0] < boxl || x[i][0] > boxh) {
-      std::cout << "Deleting x[i][0] = " << x[i][0] << " i = " << i << " type[i] = " << type[i]
-                << " global id = " << atom->tag[i] << std::endl;
+      /* std::cout << "Deleting x[i][0] = " << x[i][0] << " i = " << i << " type[i] = " << type[i]
+                << " global id = " << atom->tag[i] << std::endl; */
       list[ncount++] = i;
     }
   }
@@ -1041,7 +1041,7 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
               rsq = delx * delx + dely * dely + delz * delz;
               if (rsq < nearsq) {
                 if (comm->me == 0)
-                  std::cout << "NEAR denies in attempt No. " << attempt << "." << std::endl;
+                  // std::cout << "NEAR denies in attempt No. " << attempt << "." << std::endl;
                 flag = 1;
               }
             }
@@ -1051,12 +1051,14 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
           entmp = usher(iregion_var, coords, etarget, natom, imol, iter);
           if (entmp < etarget + EPSILON) {
             if (comm->me == 0)
-              std::cout << "USHER accepts at E = " << entmp << " in attempt No. " << attempt
-                        << " with " << iter << " iterations" << std::endl;
+              /* std::cout << "USHER accepts at E = " << entmp << " in attempt No. " << attempt
+                        << " with " << iter << " iterations" << std::endl; */
+               ;
           } else {
             if (comm->me == 0)
-              std::cout << "USHER denies at E = " << entmp << " at attempt No. " << attempt
-                        << std::endl;
+              /* std::cout << "USHER denies at E = " << entmp << " at attempt No. " << attempt
+                        << std::endl; */
+               ;
             flag = 1;
           }
         }
@@ -1170,8 +1172,8 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
         break;
       }
 
-      if (!success && comm->me == 0)
-        error->warning(FLERR, "Particle/molecule insertion was unsuccessful");
+      /* if (!success && comm->me == 0)
+        error->warning(FLERR, "Particle/molecule insertion was unsuccessful"); */
 
       // reset global natoms,nbonds,etc
       // increment maxtag_all and maxmol_all if necessary
