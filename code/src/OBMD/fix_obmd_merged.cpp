@@ -1702,8 +1702,8 @@ int FixObmdMerged::check_mol_region(Region *region, double **coords, int natom)
     if (region && !region->match(coords[m][0], coords[m][1], coords[m][2])) flag = 1;
   }
   MPI_Allreduce(&flag, &flagall, 1, MPI_INT, MPI_MAX, world);
-  if (comm->me == 0 && flagall == 1)
-    std::cout << "USHER has moved the particle/molecule too much" << std::endl;
+  /* if (comm->me == 0 && flagall == 1)
+    std::cout << "USHER has moved the particle/molecule too much" << std::endl; */
 
   return flagall;
 }
