@@ -1042,7 +1042,7 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
               if (rsq < nearsq) {
                 if (comm->me == 0)
                   // std::cout << "NEAR denies in attempt No. " << attempt << "." << std::endl;
-                flag = 1;
+                  flag = 1;
               }
             }
           }
@@ -1053,12 +1053,12 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
             if (comm->me == 0)
               /* std::cout << "USHER accepts at E = " << entmp << " in attempt No. " << attempt
                         << " with " << iter << " iterations" << std::endl; */
-               ;
+              ;
           } else {
             if (comm->me == 0)
               /* std::cout << "USHER denies at E = " << entmp << " at attempt No. " << attempt
                         << std::endl; */
-               ;
+              ;
             flag = 1;
           }
         }

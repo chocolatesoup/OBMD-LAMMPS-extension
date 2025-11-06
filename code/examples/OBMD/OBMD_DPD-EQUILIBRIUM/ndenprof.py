@@ -48,7 +48,7 @@ def compute_ndenprof(file,bins,start,stop):
     nds_avg = np.average(ndsEDT,axis=0)
     nds_err = np.std(ndsEDT,axis=0)
     
-    # mean NDS should be around 3.0 (+-0.05) in between buffer regions (6 - 27)
+    # mean NDS should be around 3.0 (+-0.05) in between buffer regions
     mean_nds = np.mean(nds_avg_all)
     if (abs(mean_nds - 3.0) > 0.05):
         print("NDS is WRONG!")
@@ -75,7 +75,6 @@ def compute_ndenprof(file,bins,start,stop):
     #plt.show()
     #plt.close()
 
-    return 0 
 
 # ----------------------------------------------------------------------------------------------------- #
 
