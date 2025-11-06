@@ -1,5 +1,5 @@
 
-In the Programmer's manual, instructions on how to compile LAMMPS (**version 7 Feb 2024**) with the `obmd` extension are provided, along with explanation of the structure, classes, and function of the added `lj/cut/rf` pair style. The code introduced below can be downloaded [here](https://github.com/chocolatesoup/OBMD-LAMMPS-extension/tree/main). 
+In the Programmer's manual, instructions on how to compile LAMMPS (**version lammps-220725_update1**) with the `obmd` extension are provided, along with explanation of the structure, classes, and function of the added `lj/cut/rf` pair style. The code introduced below can be downloaded [here](https://github.com/chocolatesoup/OBMD-LAMMPS-extension/tree/main). 
 
 ## OBMD PACKAGE
 
@@ -1368,7 +1368,7 @@ void PairLJCutRF::allocate()
 		    for (int j = i; j < np1; j++) setflag[i][j] = 0;
 
 	memory->create(cutsq, np1, np1, "pair:cutsq");
-	 memory->create(cut_lj, np1, np1, "pair:cut_lj");
+	memory->create(cut_lj, np1, np1, "pair:cut_lj");
 	memory->create(cut_ljsq, np1, np1, "pair:cut_ljsq");
 	memory->create(cut_coul, np1, np1, "pair:cut_coul");
 	memory->create(cut_coulsq, np1, np1, "pair:cut_coulsq");

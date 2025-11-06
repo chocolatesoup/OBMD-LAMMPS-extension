@@ -134,12 +134,12 @@ compute         mv all momentum
 fix             4 all ave/time 1000 1 1000 c_mv[*] file momentum_all.out 
 
 # ----------------- Output Section -----------------
-thermo          1000 
+thermo          {out}
 thermo_style    custom step time etotal pe ke temp press c_mom_1[*] c_mom_2[*] c_temproi_1 
 dump            out all yaml 1000 trajectory.yaml id type x y z vx vy vz 
 dump_modify     out sort id pad 5 time yes thermo yes 
 
-run             2000000 
+run             {steps}
     """
     file_to_write.write(content_4in)
     file_to_write.close()

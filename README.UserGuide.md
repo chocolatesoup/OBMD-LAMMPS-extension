@@ -6,7 +6,7 @@ To perform open-boundary molecular dynamics (OBMD) simulations using the `obmd` 
 lmp_mpi -in in.simulation
 ```
 
-The script `input.py` is located [here](https://github.com/chocolatesoup/OBMD-LAMMPS-extension/tree/main/examples/OBMD_DPD).
+The script `input.py` is located [here](./code/examples/OBMD/OBMD_DPD-EQUILIBRIUM).
 
 ##### INITIALIZATION SETTINGS
 
