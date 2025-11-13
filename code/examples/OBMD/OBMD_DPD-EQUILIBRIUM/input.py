@@ -62,8 +62,8 @@ maxattempt = 1
 # simulation details
 skin = 0.4
 dt = 0.001464
-steps = int(20 * pow(10,5)) 
-out = 1000
+steps = int(10 * pow(10,3)) 
+out = 100
 
 # --------------------------------------------------------------------------------------------- #
 # write LAMMPS input script
@@ -119,7 +119,7 @@ compute         temproi_1 roi_group temp/profile 1 1 1 x 50
 
 # number density
 compute         ndenprof all chunk/atom bin/1d x lower 1.1198208286674132 units box
-fix             3 all ave/chunk 1000 1 1000 ndenprof density/number file nden_profile.out
+fix             3 all ave/chunk 100 1 100 ndenprof density/number file nden_profile.out
 
 # momentum
 compute         mom_1 all momentum
@@ -131,13 +131,13 @@ compute         mom_2 all reduce sum v_px v_py v_pz
 # output
 # momentum
 compute         mv all momentum
-fix             4 all ave/time 1000 1 1000 c_mv[*] file momentum_all.out 
+fix             4 all ave/time 100 1 100 c_mv[*] file momentum_all.out 
 
 # ----------------- Output Section -----------------
 thermo          {out}
 thermo_style    custom step time etotal pe ke temp press c_mom_1[*] c_mom_2[*] c_temproi_1 
-dump            out all yaml 1000 trajectory.yaml id type x y z vx vy vz 
-dump_modify     out sort id pad 5 time yes thermo yes 
+# dump            out all yaml 100 trajectory.yaml id type x y z vx vy vz 
+# dump_modify     out sort id pad 5 time yes thermo yes 
 
 run             {steps}
     """
