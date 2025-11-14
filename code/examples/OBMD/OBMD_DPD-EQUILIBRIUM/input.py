@@ -15,9 +15,9 @@ def compute_N(rho, Lx, Ly, Lz):
 xlo = 0.0
 ylo = 0.0
 zlo = 0.0                                                                                                     
-xhi = 33.594
-yhi = 11.198
-zhi = 11.198
+xhi = 33.59462486002239
+yhi = 11.198208286674133
+zhi = 11.198208286674133
 
 # model details
 Nm = 8 
