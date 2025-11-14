@@ -1398,16 +1398,6 @@ void FixObmdMerged::reg_force(int vflag, Region *region, double *momentumForce, 
   double unwrap[3];
   double xval, yval, zval;
 
-  // create test_force to check obmd
-  double test_force[3];
-  test_force[0] = test_force[1] = test_force[2] = 0.0;
-  double sestevek = 0.0;
-
-  double test_force_all[3];
-  test_force_all[0] = test_force_all[2] = test_force_all[3] = 0.0;
-
-  int allnu = 0;
-
   for (int i = 0; i < nlocal; i++) {
     if (region && !region->match(x[i][0], x[i][1], x[i][2])) continue;
     domain->unmap(x[i], image[i], unwrap);
@@ -1423,12 +1413,6 @@ void FixObmdMerged::reg_force(int vflag, Region *region, double *momentumForce, 
     f[i][0] += xval;
     f[i][1] += yval;
     f[i][2] += zval;
-
-    test_force[0] += momentumForce[0] * gloctmp / gtmp;
-    test_force[1] += momentumForce[1] * gloctmp / gtmp;
-    test_force[2] += momentumForce[2] * gloctmp / gtmp;
-
-    sestevek += gloctmp;
 
     if (evflag) {
       v[0] = xval * unwrap[0];
