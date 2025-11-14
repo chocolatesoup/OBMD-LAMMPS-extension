@@ -1424,8 +1424,6 @@ void FixObmdMerged::reg_force(int vflag, Region *region, double *momentumForce, 
       v_tally(i, v);
     }
   }
-
-  MPI_Allreduce(test_force, test_force_all, 3, MPI_DOUBLE, MPI_SUM, world);
 }
 
 /* ---------------------------------------------------------------------- */
