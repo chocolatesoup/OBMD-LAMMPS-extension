@@ -7,8 +7,8 @@ from sys import argv
 #import matplotlib.pyplot as plt
 
 Lx = 33.59462486002239
-LbufferEnd = 5.0
-RbufferStart = 27.0
+LbufferEnd = 5.039193729003359
+RbufferStart = 28.555431131019034
 
 # ----------------------------------------------------------------------------------------------------- #
 
