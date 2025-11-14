@@ -68,6 +68,10 @@ if (test $1 = "COLLOID") then
   depend OPENMP
 fi
 
+if (test $1 = "COLVARS") then
+  depend KOKKOS
+fi
+
 if (test $1 = "DIELECTRIC") then
   depend OPENMP
 fi
@@ -89,6 +93,10 @@ if (test $1 = "ELECTRODE") then
 fi
 
 if (test $1 = "EXTRA-COMPUTE") then
+  depend KOKKOS
+fi
+
+if (test $1 = "EXTRA-FIX") then
   depend KOKKOS
 fi
 
@@ -116,6 +124,7 @@ if (test $1 = "KSPACE") then
   depend CG-SPICA
   depend CORESHELL
   depend DIELECTRIC
+  depend DPD-BASIC
   depend GPU
   depend KOKKOS
   depend OPT
@@ -141,6 +150,7 @@ fi
 
 if (test $1 = "MC") then
   depend MISC
+  depend VORONOI
 fi
 
 if (test $1 = "MEAM") then
@@ -171,6 +181,7 @@ if (test $1 = "PHONON") then
 fi
 
 if (test $1 = "RIGID") then
+  depend MC
   depend KOKKOS
   depend OPENMP
   depend DPD-SMOOTH
@@ -184,10 +195,18 @@ if (test $1 = "ML-PACE") then
   depend KOKKOS
 fi
 
+if (test $1 = "ML-POD") then
+  depend KOKKOS
+fi
+
 if (test $1 = "ML-SNAP") then
   depend ML-IAP
   depend KOKKOS
   depend INTEL
+fi
+
+if (test $1 = "ML-UF3") then
+  depend KOKKOS
 fi
 
 if (test $1 = "CG-SPICA") then

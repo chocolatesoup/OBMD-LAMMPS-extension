@@ -73,7 +73,6 @@ PairLJCutRF::~PairLJCutRF()
 
 void PairLJCutRF::compute(int eflag, int vflag)
 {
-  std::cout<<"compute"<<"\n";
   int i, j, ii, jj, inum, jnum, itype, jtype;
   double qtmp, xtmp, ytmp, ztmp, delx, dely, delz, evdwl, ecoul, fpair;
   double rsq, r2inv, r6inv, forcecoul, forcelj, factor_coul, factor_lj;
@@ -182,15 +181,6 @@ void PairLJCutRF::compute(int eflag, int vflag)
 
         if (evflag) ev_tally(i, j, nlocal, newton_pair, evdwl, ecoul, fpair, delx, dely, delz);
       }
-    }
-  }
-
-  for (int i = 0; i < nlocal; i++) {
-    if (atom->tag[i] == 226) {
-          std::cout<<"compute: second"<<"\n";
-          std::cout<<"atom->tag[i]: "<<atom->tag[i]<<"\n";
-          std::cout<<"x[i][0]: "<<x[i][0]<<"\n";
-          std::cout<<"f[i][0]: "<<f[i][0]<<"\n";
     }
   }
 
@@ -309,7 +299,7 @@ void PairLJCutRF::coeff(int narg, char **arg)
 
 void PairLJCutRF::init_style()
 {
-  if (!atom->q_flag) error->all(FLERR, "Pair style lj/cut/coul/cut requires atom attribute q");
+  if (!atom->q_flag) error->all(FLERR, "Pair style lj/cut/rf requires atom attribute q");
 
   neighbor->add_request(this);
 }

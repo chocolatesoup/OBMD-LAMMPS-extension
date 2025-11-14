@@ -549,7 +549,6 @@ void FixObmdMerged::setup(int vflag)
 ------------------------------------------------------------------------- */
 void FixObmdMerged::pre_exchange()
 {
-  std::cout << "pre_exchange" << "\n";
   int cnt_left, cnt_right, stev_left, stev_right, i;
   double ninsert_left, ninsert_right;
   double masstotal_left, masstotal_right;
@@ -667,8 +666,8 @@ void FixObmdMerged::try_deleting(Region *region, double *vnewl, double *vnewr)
   int ncount = 0;
   for (i = 0; i < nlocal; i++) {
     if (x[i][0] < boxl || x[i][0] > boxh) {
-      std::cout << "Deleting x[i][0] = " << x[i][0] << " i = " << i << " type[i] = " << type[i]
-                << " global id = " << atom->tag[i] << std::endl;
+      /* std::cout << "Deleting x[i][0] = " << x[i][0] << " i = " << i << " type[i] = " << type[i]
+                << " global id = " << atom->tag[i] << std::endl; */
       list[ncount++] = i;
     }
   }
@@ -963,7 +962,7 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
               delx = coord[0] - x[i][0];
               dely = coord[1] - x[i][1];
               delz = 0.0;
-              domain->minimum_image(delx, dely, delz);
+              domain->minimum_image(FLERR, delx, dely, delz);
               if (dimension == 2)
                 rsq = delx * delx;
               else
@@ -1038,12 +1037,12 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
               delx = coords[m][0] - x[i][0];
               dely = coords[m][1] - x[i][1];
               delz = coords[m][2] - x[i][2];
-              domain->minimum_image(delx, dely, delz);
+              domain->minimum_image(FLERR, delx, dely, delz);
               rsq = delx * delx + dely * dely + delz * delz;
               if (rsq < nearsq) {
                 if (comm->me == 0)
-                  std::cout << "NEAR denies in attempt No. " << attempt << "." << std::endl;
-                flag = 1;
+                  // std::cout << "NEAR denies in attempt No. " << attempt << "." << std::endl;
+                  flag = 1;
               }
             }
           }
@@ -1052,12 +1051,14 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
           entmp = usher(iregion_var, coords, etarget, natom, imol, iter);
           if (entmp < etarget + EPSILON) {
             if (comm->me == 0)
-              std::cout << "USHER accepts at E = " << entmp << " in attempt No. " << attempt
-                        << " with " << iter << " iterations" << std::endl;
+              /* std::cout << "USHER accepts at E = " << entmp << " in attempt No. " << attempt
+                        << " with " << iter << " iterations" << std::endl; */
+              ;
           } else {
             if (comm->me == 0)
-              std::cout << "USHER denies at E = " << entmp << " at attempt No. " << attempt
-                        << std::endl;
+              /* std::cout << "USHER denies at E = " << entmp << " at attempt No. " << attempt
+                        << std::endl; */
+              ;
             flag = 1;
           }
         }
@@ -1171,8 +1172,8 @@ void FixObmdMerged::try_inserting(Region *iregion_var, int stev, double *vnewl, 
         break;
       }
 
-      if (!success && comm->me == 0)
-        error->warning(FLERR, "Particle/molecule insertion was unsuccessful");
+      /* if (!success && comm->me == 0)
+        error->warning(FLERR, "Particle/molecule insertion was unsuccessful"); */
 
       // reset global natoms,nbonds,etc
       // increment maxtag_all and maxmol_all if necessary
@@ -1249,8 +1250,6 @@ double FixObmdMerged::g_par_global_charged(Region *region, int step)
 
   int nlocal = atom->nlocal;
   tagint *molecule = atom->molecule;
-  int *rep_atom = atom->rep_atom;
-  double **cms = atom->cms_mol;
   double *mass = atom->mass;
   int *type = atom->type;
   double **x = atom->x;
@@ -1343,8 +1342,6 @@ double FixObmdMerged::g_par_local_charged(double mass, Region *region, double xv
 
 double FixObmdMerged::g_perp_global_charged(Region *iregion_var, int step)
 {
-  std::cout << "g_perp_global()" << "\n";
-  std::cout << "g_perp_global(): step: " << step << "\n";
   if (iregion_var) iregion_var->prematch();
 
   int nlocal = atom->nlocal;
@@ -1401,16 +1398,6 @@ void FixObmdMerged::reg_force(int vflag, Region *region, double *momentumForce, 
   double unwrap[3];
   double xval, yval, zval;
 
-  // create test_force to check obmd
-  double test_force[3];
-  test_force[0] = test_force[1] = test_force[2] = 0.0;
-  double sestevek = 0.0;
-
-  double test_force_all[3];
-  test_force_all[0] = test_force_all[2] = test_force_all[3] = 0.0;
-
-  int allnu = 0;
-
   for (int i = 0; i < nlocal; i++) {
     if (region && !region->match(x[i][0], x[i][1], x[i][2])) continue;
     domain->unmap(x[i], image[i], unwrap);
@@ -1427,12 +1414,6 @@ void FixObmdMerged::reg_force(int vflag, Region *region, double *momentumForce, 
     f[i][1] += yval;
     f[i][2] += zval;
 
-    test_force[0] += momentumForce[0] * gloctmp / gtmp;
-    test_force[1] += momentumForce[1] * gloctmp / gtmp;
-    test_force[2] += momentumForce[2] * gloctmp / gtmp;
-
-    sestevek += gloctmp;
-
     if (evflag) {
       v[0] = xval * unwrap[0];
       v[1] = yval * unwrap[1];
@@ -1443,8 +1424,6 @@ void FixObmdMerged::reg_force(int vflag, Region *region, double *momentumForce, 
       v_tally(i, v);
     }
   }
-
-  MPI_Allreduce(test_force, test_force_all, 3, MPI_DOUBLE, MPI_SUM, world);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1705,8 +1684,8 @@ int FixObmdMerged::check_mol_region(Region *region, double **coords, int natom)
     if (region && !region->match(coords[m][0], coords[m][1], coords[m][2])) flag = 1;
   }
   MPI_Allreduce(&flag, &flagall, 1, MPI_INT, MPI_MAX, world);
-  if (comm->me == 0 && flagall == 1)
-    std::cout << "USHER has moved the particle/molecule too much" << std::endl;
+  /* if (comm->me == 0 && flagall == 1)
+    std::cout << "USHER has moved the particle/molecule too much" << std::endl; */
 
   return flagall;
 }
@@ -1792,7 +1771,7 @@ double FixObmdMerged::energy(int i, int itype, double *coord, double *fusher)
     dely = coord[1] - x[j][1];
     delz = coord[2] - x[j][2];
 
-    domain->minimum_image(delx, dely, delz);
+    domain->minimum_image(FLERR, delx, dely, delz);
     rsq = delx * delx + dely * dely + delz * delz;
 
     jtype = type[j];
@@ -1837,7 +1816,7 @@ double FixObmdMerged::energy_atomistic_obmd(Region *iregion_var, double qi, int 
     dely = coord[1] - x[j][1];
     delz = coord[2] - x[j][2];
 
-    domain->minimum_image(delx, dely, delz);
+    domain->minimum_image(FLERR, delx, dely, delz);
     rsq = delx * delx + dely * dely + delz * delz;
 
     jtype = type[j];
