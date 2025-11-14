@@ -121,18 +121,6 @@ compute         temproi_1 roi_group temp/profile 1 1 1 x 50
 compute         ndenprof all chunk/atom bin/1d x lower 1.1198208286674132 units box
 fix             3 all ave/chunk 100 1 100 ndenprof density/number file nden_profile.out
 
-# momentum
-compute         mom_1 all momentum
-variable        px atom mass*vx
-variable        py atom mass*vy
-variable        pz atom mass*vz
-compute         mom_2 all reduce sum v_px v_py v_pz
-
-# output
-# momentum
-compute         mv all momentum
-fix             4 all ave/time 100 1 100 c_mv[*] file momentum_all.out 
-
 # ----------------- Output Section -----------------
 thermo          {out}
 thermo_style    custom step time etotal pe ke temp press c_mom_1[*] c_mom_2[*] c_temproi_1 
