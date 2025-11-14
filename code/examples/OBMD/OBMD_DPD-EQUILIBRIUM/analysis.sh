@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python3 ndenprof.py 30 1 10
+python3 ndenprof.py 30 10 100
