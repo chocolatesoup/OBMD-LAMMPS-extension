@@ -1,0 +1,44 @@
+name: Compile LAMMPS
+
+on:
+  push:
+    paths:
+      - '.github/**'
+      - 'code/**'
+      - 'OBMD_DPD/**'
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-24.04-arm
+          - ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: eessi/github-action-eessi@v3
+    - name: set up EasyBuild
+      run: |
+        pwd
+        module load EESSI-extend/2023.06-easybuild
+        eb --show-config
+        echo "Get EasyConfig"
+        # Can change the LAMMPS commit which will be build by updating LAMMPS_COMMIT_BUILD https://github.com/laraPPr/lammps/settings/variables/actions
+        eb .github/workflows/LAMMPS_OBMD-foss-2023b-software-commit.eb --software-commit ${GITHUB_SHA}
+        module avail LAMMPS
+        module load LAMMPS/${GITHUB_SHA}-foss-2023a-kokkos-dev_OBMD
+        echo $EBROOTLAMMPS
+        ls $EBROOTLAMMPS
+        python3 examples/OBMD_DPD/input.py
+        mpirun --oversubscribe -np 4 lmp -in in.simulation
+    - name: Copy /tmp/eb-* to runner temp
+      if: failure()
+      run: |
+        mkdir -p $RUNNER_TEMP/eb-dump
+        cp -r /tmp/eb-* $RUNNER_TEMP/eb-dump || echo "No matching dirs"
+    - name: Upload temp files on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: temp-files
+        path: ${{ runner.temp }}/eb-dump
