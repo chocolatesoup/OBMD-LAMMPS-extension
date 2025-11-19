@@ -123,7 +123,7 @@ fix             3 all ave/chunk 100 1 100 ndenprof density/number file nden_prof
 
 # ----------------- Output Section -----------------
 thermo          {out}
-thermo_style    custom step time etotal pe ke temp press c_mom_1[*] c_mom_2[*] c_temproi_1 
+thermo_style    custom step time etotal pe ke temp press c_temproi_1 
 # dump            out all yaml 100 trajectory.yaml id type x y z vx vy vz 
 # dump_modify     out sort id pad 5 time yes thermo yes 
 
