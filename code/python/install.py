@@ -29,6 +29,8 @@ parser.add_argument("-v", "--versionfile", required=True,
                     help="path to the LAMMPS version.h source file")
 parser.add_argument("-f", "--force", action="store_true", required=False, default=False,
                     help="force installation of LAMMPS Python package")
+parser.add_argument("-i", "--installdir", required=True,
+                    help= "path to site-packages in lammps module")
 
 args = parser.parse_args()
 
@@ -72,6 +74,14 @@ if args.versionfile:
   else:
     args.versionfile = os.path.abspath(args.versionfile)
 
+if args.installdir:
+  if not os.path.exists(args.installdir):
+    print("\nERROR: LAMMPS site-packages file at %s does not exist\n" % args.installdir)
+    parser.print_help()
+    sys.exit(1)
+  else:
+    args.installdir = os.path.abspath(args.installdir)
+
 olddir = os.path.abspath('.')
 pythondir = os.path.abspath(os.path.join(args.package,'..'))
 os.putenv('LAMMPS_VERSION_FILE',os.path.abspath(args.versionfile))
@@ -98,6 +108,12 @@ shutil.copy(args.lib,'lammps')
 
 # create a virtual environment for building the wheel
 shutil.rmtree('buildwheel', True)
+try:
+  txt = subprocess.check_output([py_exe, '-m', 'pip', 'install', '--force-reinstall', wheel, '--target', args.installdir], stderr=subprocess.STDOUT, shell=False)
+  print(txt)
+  sys.exit(0)
+except subprocess.CalledProcessError as err:
+  sys.exit(err.output.decode('UTF-8'))
 try:
   txt = subprocess.check_output([sys.executable, '-m', 'venv', 'buildwheel'], stderr=subprocess.STDOUT, shell=False)
   print(txt.decode('UTF-8'))
