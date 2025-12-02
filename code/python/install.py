@@ -109,12 +109,6 @@ shutil.copy(args.lib,'lammps')
 # create a virtual environment for building the wheel
 shutil.rmtree('buildwheel', True)
 try:
-  txt = subprocess.check_output([py_exe, '-m', 'pip', 'install', '--force-reinstall', wheel, '--target', args.installdir], stderr=subprocess.STDOUT, shell=False)
-  print(txt)
-  sys.exit(0)
-except subprocess.CalledProcessError as err:
-  sys.exit(err.output.decode('UTF-8'))
-try:
   txt = subprocess.check_output([sys.executable, '-m', 'venv', 'buildwheel'], stderr=subprocess.STDOUT, shell=False)
   print(txt.decode('UTF-8'))
 except subprocess.CalledProcessError as err:
@@ -162,6 +156,12 @@ else:
   print("Installing wheel into system site-packages folder")
   py_exe = sys.executable
 
+try:
+  txt = subprocess.check_output([py_exe, '-m', 'pip', 'install', '--force-reinstall', wheel, '--target', args.installdir], stderr=subprocess.STDOUT, shell=False)
+  print(txt)
+  sys.exit(0)
+except subprocess.CalledProcessError as err:
+  sys.exit(err.output.decode('UTF-8'))
 try:
   if args.force:
     txt = subprocess.check_output([py_exe, '-m', 'pip', 'install', '--force-reinstall', '--break-system-packages', wheel], stderr=subprocess.STDOUT, shell=False)
